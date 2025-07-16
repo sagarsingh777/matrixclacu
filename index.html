@@ -1,205 +1,178 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Matrix Calculator</title>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f2f4f8;
-      padding: 40px;
-      color: #333;
+      font-family: Arial, sans-serif;
+      background-color: #f3f6fa;
+      padding: 20px;
     }
     h1 {
-      font-size: 2em;
-      margin-bottom: 20px;
+      font-size: 32px;
+      color: #333;
+    }
+    label, select, input {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    select {
+      padding: 6px;
+      background-color: #cde9ff;
+      border: 1px solid #999;
+      border-radius: 5px;
     }
     .matrix-input {
-      margin-bottom: 20px;
+      margin: 10px 5px;
     }
     input[type="number"] {
       width: 50px;
-      height: 40px;
-      font-size: 16px;
       text-align: center;
-      margin: 5px;
     }
-    .buttons button {
-      background-color: #0069ed;
+    .button-group {
+      margin-top: 15px;
+    }
+    button {
+      background-color: #3b82f6;
       color: white;
       border: none;
-      padding: 10px 20px;
-      margin: 5px;
-      border-radius: 5px;
+      padding: 8px 14px;
+      margin-right: 10px;
       cursor: pointer;
-      font-weight: bold;
+      border-radius: 5px;
     }
     .result {
-      background: white;
-      padding: 20px;
       margin-top: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      font-size: 18px;
+      padding: 10px;
+      background-color: white;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
   <h1>Matrix Calculator</h1>
-
-  <label for="matrixOrder">Select matrix order:</label>
-  <select id="matrixOrder">
+  <label for="order">Select matrix order:</label>
+  <select id="order">
     <option value="2">2x2</option>
     <option value="3">3x3</option>
   </select>
-  <button onclick="createMatrixInputs()">Next</button>
+  <button onclick="generateMatrix()">Next</button>
 
-  <div id="matrixInputs" class="matrix-input"></div>
-
-  <div class="buttons">
-    <button onclick="calculateAdjugate()">Adjugate</button>
+  <div id="matrixInputs"></div>
+  <label>Power: <input type="number" id="powerValue" value="1" /></label>
+  <div class="button-group">
     <button onclick="calculateDeterminant()">Determinant</button>
-    <button onclick="raiseToPower()">Power</button>
-    <input type="number" id="power" placeholder="n" style="width: 40px">
+    <button onclick="calculateAdjugate()">Adjugate</button>
+    <button onclick="calculatePower()">Power</button>
   </div>
 
   <div id="result" class="result"></div>
 
   <script>
-    let matrixSize = 2;
+    let matrix = [];
 
-    function createMatrixInputs() {
-      matrixSize = parseInt(document.getElementById("matrixOrder").value);
+    function generateMatrix() {
+      const order = parseInt(document.getElementById("order").value);
       const container = document.getElementById("matrixInputs");
-      container.innerHTML = '';
-      for (let i = 0; i < matrixSize; i++) {
-        for (let j = 0; j < matrixSize; j++) {
+      container.innerHTML = "";
+      matrix = [];
+
+      for (let i = 0; i < order; i++) {
+        const row = [];
+        for (let j = 0; j < order; j++) {
           const input = document.createElement("input");
           input.type = "number";
-          input.id = `cell-${i}-${j}`;
+          input.className = "matrix-input";
+          input.dataset.row = i;
+          input.dataset.col = j;
+          input.value = 0;
           container.appendChild(input);
+          row.push(input);
         }
         container.appendChild(document.createElement("br"));
-      }
-      document.getElementById("result").innerHTML = '';
-    }
-
-    function getMatrix() {
-      const matrix = [];
-      for (let i = 0; i < matrixSize; i++) {
-        const row = [];
-        for (let j = 0; j < matrixSize; j++) {
-          const value = parseFloat(document.getElementById(`cell-${i}-${j}`).value) || 0;
-          row.push(value);
-        }
         matrix.push(row);
       }
-      return matrix;
     }
 
-    function determinant(matrix) {
-      if (matrix.length === 2) {
-        return matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0];
-      } else {
-        return (
-          matrix[0][0]*(matrix[1][1]*matrix[2][2] - matrix[1][2]*matrix[2][1]) -
-          matrix[0][1]*(matrix[1][0]*matrix[2][2] - matrix[1][2]*matrix[2][0]) +
-          matrix[0][2]*(matrix[1][0]*matrix[2][1] - matrix[1][1]*matrix[2][0])
-        );
-      }
-    }
-
-    function cofactor(matrix, row, col) {
-      const minor = matrix.filter((_, r) => r !== row).map(r => r.filter((_, c) => c !== col));
-      const det = determinant(minor);
-      return ((row + col) % 2 === 0 ? 1 : -1) * det;
-    }
-
-    function calculateAdjugate(matrix, n) {
-    // Handle 2x2 matrix directly
-    if (n === 2) {
-        const a = matrix[0][0];
-        const b = matrix[0][1];
-        const c = matrix[1][0];
-        const d = matrix[1][1];
-
-        const adj = [
-            [d, -b],
-            [-c, a]
-        ];
-
-        displayLatexMatrix("Adjugate: ", adj);
-        return;
-    }
-
-    // General case (n > 2)
-    const cofactors = [];
-    for (let i = 0; i < n; i++) {
-        cofactors[i] = [];
-        for (let j = 0; j < n; j++) {
-            const subMatrix = getCofactor(matrix, i, j, n);
-            const sign = ((i + j) % 2 === 0) ? 1 : -1;
-            const det = calculateDeterminant(subMatrix, n - 1);
-            cofactors[i][j] = sign * det;
-        }
-    }
-
-    // Transpose the cofactor matrix to get adjugate
-    const adjugate = cofactors[0].map((_, colIndex) =>
-        cofactors.map(row => row[colIndex])
-    );
-
-    displayLatexMatrix("Adjugate: ", adjugate);
-}
-
-
-    function matrixToLatex(matrix) {
-      return `\\begin{bmatrix}${matrix.map(row => row.join(' & ')).join(' \\\\ ')}\\end{bmatrix}`;
+    function getMatrixValues() {
+      return matrix.map(row => row.map(cell => parseFloat(cell.value)));
     }
 
     function calculateDeterminant() {
-      const m = getMatrix();
-      const det = determinant(m);
-      document.getElementById("result").innerHTML = `$$
-        \text{Matrix: } ${matrixToLatex(m)} \\
-        \text{Determinant: } \det(A) = ${det}
-      $$`;
-      MathJax.typeset();
+      const mat = getMatrixValues();
+      const n = mat.length;
+      let det = 0;
+      if (n === 2) {
+        det = mat[0][0] * mat[1][1] - mat[0][1] * mat[1][0];
+      } else if (n === 3) {
+        det = mat[0][0]*(mat[1][1]*mat[2][2] - mat[1][2]*mat[2][1])
+            - mat[0][1]*(mat[1][0]*mat[2][2] - mat[1][2]*mat[2][0])
+            + mat[0][2]*(mat[1][0]*mat[2][1] - mat[1][1]*mat[2][0]);
+      }
+      displayResult(`Determinant: ${det}`);
     }
 
     function calculateAdjugate() {
-      const m = getMatrix();
-      const adj = adjugate(m);
-      document.getElementById("result").innerHTML = `$$
-        \text{Original Matrix: } ${matrixToLatex(m)} \\
-        \text{Adjugate: } ${matrixToLatex(adj)}
-      $$`;
-      MathJax.typeset();
-    }
+      const mat = getMatrixValues();
+      const n = mat.length;
+      let adj = [];
 
-    function multiplyMatrices(a, b) {
-      return a.map((row, i) => b[0].map((_, j) => row.reduce((sum, _, k) => sum + a[i][k] * b[k][j], 0)));
-    }
-
-    function raiseToPower() {
-      const m = getMatrix();
-      const n = parseInt(document.getElementById("power").value);
-      if (isNaN(n) || n < 1) return alert("Enter valid power n ≥ 1");
-      let result = m;
-      for (let i = 1; i < n; i++) {
-        result = multiplyMatrices(result, m);
+      if (n === 2) {
+        adj = [
+          [mat[1][1], -mat[0][1]],
+          [-mat[1][0], mat[0][0]]
+        ];
+      } else if (n === 3) {
+        const cofactor = (r, c) => {
+          const sub = mat.filter((_, i) => i !== r).map(row => row.filter((_, j) => j !== c));
+          return ((r + c) % 2 === 0 ? 1 : -1) * (
+            sub[0][0] * sub[1][1] - sub[0][1] * sub[1][0]
+          );
+        };
+        const cof = Array.from({length: 3}, (_, i) => Array.from({length: 3}, (_, j) => cofactor(i, j)));
+        adj = cof[0].map((_, j) => cof.map(row => row[j]));
       }
-      document.getElementById("result").innerHTML = `$$
-        A = ${matrixToLatex(m)} \\
-        A^{${n}} = ${matrixToLatex(result)}
-      $$`;
+      displayLatexMatrix("Adjugate:", adj);
+    }
+
+    function calculatePower() {
+      const mat = getMatrixValues();
+      const n = mat.length;
+      let power = parseInt(document.getElementById("powerValue").value);
+      let result = JSON.parse(JSON.stringify(mat));
+
+      for (let p = 1; p < power; p++) {
+        let temp = Array.from({ length: n }, () => Array(n).fill(0));
+        for (let i = 0; i < n; i++) {
+          for (let j = 0; j < n; j++) {
+            for (let k = 0; k < n; k++) {
+              temp[i][j] += result[i][k] * mat[k][j];
+            }
+          }
+        }
+        result = temp;
+      }
+
+      displayLatexMatrix(`Matrix^${power}:`, result);
+    }
+
+    function displayResult(text) {
+      document.getElementById("result").innerHTML = `$$${text}$$`;
       MathJax.typeset();
     }
 
-    window.onload = createMatrixInputs;
+    function displayLatexMatrix(label, matrix) {
+      const latex = matrix.map(row => row.join(" & ")).join(" \\");
+      displayResult(`${label} \\ \begin{bmatrix}${latex}\end{bmatrix}`);
+    }
+
+    // Load default matrix
+    window.onload = generateMatrix;
   </script>
 </body>
 </html>
