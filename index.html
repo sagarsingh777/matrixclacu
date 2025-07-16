@@ -7,45 +7,53 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f0f4f8;
+      background: #f7f9fa;
       padding: 20px;
       text-align: center;
     }
 
     h1 {
+      margin-bottom: 20px;
       color: #333;
     }
 
     select, input[type="number"] {
       padding: 8px;
+      font-size: 16px;
       margin: 10px;
-      font-size: 1em;
     }
 
-    .matrix-container {
+    .matrix-area {
       display: flex;
       justify-content: center;
       align-items: center;
-      margin: 20px auto;
+      margin: 30px auto;
     }
 
     .bracket {
-      font-size: 3em;
-      line-height: 0.7;
-      user-select: none;
+      font-size: 50px;
+      line-height: 1.1;
+      padding: 0 10px;
     }
 
-    .matrix {
+    .matrix-grid {
       display: grid;
-      gap: 5px;
+      gap: 8px;
+    }
+
+    .matrix-grid input {
+      width: 50px;
+      height: 40px;
+      text-align: center;
+      font-size: 16px;
     }
 
     .btn {
       padding: 10px 20px;
-      margin: 10px;
-      font-size: 1em;
-      background-color: #3498db;
+      margin: 8px;
+      font-size: 16px;
       color: white;
+      background-color: #3498db;
       border: none;
       border-radius: 8px;
       cursor: pointer;
@@ -59,13 +67,15 @@
       margin-top: 20px;
       background: white;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
+      border-radius: 10px;
+      display: inline-block;
       text-align: left;
-      font-size: 1.1em;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .label {
+      margin-top: 15px;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -74,13 +84,12 @@
   <h1>Matrix Calculator</h1>
 
   <label for="order">Select matrix order:</label>
-  <select id="order">
+  <select id="order" onchange="generateMatrix()">
     <option value="2">2×2</option>
     <option value="3">3×3</option>
   </select>
-  <button class="btn" onclick="generateMatrix()">Generate</button>
 
-  <div class="matrix-container" id="matrix-area"></div>
+  <div class="matrix-area" id="matrix-area"></div>
 
   <div>
     <button class="btn" onclick="calculateDeterminant()">Determinant</button>
@@ -92,32 +101,36 @@
 
   <script>
     function generateMatrix() {
-      const order = parseInt(document.getElementById("order").value);
-      const container = document.getElementById("matrix-area");
-      container.innerHTML = "";
+      const size = parseInt(document.getElementById("order").value);
+      const area = document.getElementById("matrix-area");
+      area.innerHTML = "";
 
-      const matrix = document.createElement("div");
-      matrix.className = "matrix";
-      matrix.style.gridTemplateColumns = `repeat(${order}, 50px)`;
+      const leftBracket = document.createElement("div");
+      leftBracket.className = "bracket";
+      leftBracket.innerText = "(";
 
-      for (let i = 0; i < order * order; i++) {
+      const grid = document.createElement("div");
+      grid.className = "matrix-grid";
+      grid.style.gridTemplateColumns = `repeat(${size}, 50px)`;
+
+      for (let i = 0; i < size * size; i++) {
         const input = document.createElement("input");
         input.type = "number";
         input.value = 0;
-        matrix.appendChild(input);
+        grid.appendChild(input);
       }
 
-      container.appendChild(document.createElement("div")).className = "bracket";
-      container.lastChild.innerHTML = "(";
+      const rightBracket = document.createElement("div");
+      rightBracket.className = "bracket";
+      rightBracket.innerText = ")";
 
-      container.appendChild(matrix);
-
-      container.appendChild(document.createElement("div")).className = "bracket";
-      container.lastChild.innerHTML = ")";
+      area.appendChild(leftBracket);
+      area.appendChild(grid);
+      area.appendChild(rightBracket);
     }
 
     function getMatrixValues() {
-      const inputs = document.querySelectorAll(".matrix input");
+      const inputs = document.querySelectorAll(".matrix-grid input");
       const size = Math.sqrt(inputs.length);
       const matrix = [];
 
@@ -136,12 +149,12 @@
       let det = 0;
 
       if (matrix.length === 2) {
-        det = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+        det = matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0];
       } else if (matrix.length === 3) {
         det =
-          matrix[0][0] * (matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1]) -
-          matrix[0][1] * (matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0]) +
-          matrix[0][2] * (matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0]);
+          matrix[0][0]*(matrix[1][1]*matrix[2][2] - matrix[1][2]*matrix[2][1]) -
+          matrix[0][1]*(matrix[1][0]*matrix[2][2] - matrix[1][2]*matrix[2][0]) +
+          matrix[0][2]*(matrix[1][0]*matrix[2][1] - matrix[1][1]*matrix[2][0]);
       }
 
       document.getElementById("result").innerHTML = `<strong>Determinant:</strong> ${det}`;
@@ -176,30 +189,30 @@
             cofactor(matrix[0][0], matrix[0][1], matrix[1][0], matrix[1][1])
           ]
         ];
-        // Transpose the cofactor matrix
-        adj = adj[0].map((_, colIndex) => adj.map(row => row[colIndex]));
+        adj = adj[0].map((_, i) => adj.map(row => row[i])); // Transpose
       }
 
-      let html = "<strong>Adjugate Matrix:</strong><br><pre>[<br>";
+      let html = `<strong>Adjugate:</strong><br><pre>[<br>`;
       adj.forEach(row => {
         html += "  " + row.map(n => n.toFixed(2)).join(", ") + "<br>";
       });
       html += "]</pre>";
-
       document.getElementById("result").innerHTML = html;
     }
 
     function calculatePower() {
       const matrix = getMatrixValues();
       const power = parseInt(prompt("Enter the power:"));
+      if (isNaN(power) || power < 1) return;
+
+      const size = matrix.length;
       let result = matrix.map(row => [...row]);
-      const n = matrix.length;
 
       function multiply(a, b) {
-        const res = Array(n).fill(0).map(() => Array(n).fill(0));
-        for (let i = 0; i < n; i++) {
-          for (let j = 0; j < n; j++) {
-            for (let k = 0; k < n; k++) {
+        const res = Array(size).fill(0).map(() => Array(size).fill(0));
+        for (let i = 0; i < size; i++) {
+          for (let j = 0; j < size; j++) {
+            for (let k = 0; k < size; k++) {
               res[i][j] += a[i][k] * b[k][j];
             }
           }
@@ -207,7 +220,7 @@
         return res;
       }
 
-      for (let p = 1; p < power; p++) {
+      for (let i = 1; i < power; i++) {
         result = multiply(result, matrix);
       }
 
@@ -216,9 +229,11 @@
         html += "  " + row.map(n => n.toFixed(2)).join(", ") + "<br>";
       });
       html += "]</pre>";
-
       document.getElementById("result").innerHTML = html;
     }
+
+    // Auto-generate on load
+    window.onload = generateMatrix;
   </script>
 </body>
 </html>
