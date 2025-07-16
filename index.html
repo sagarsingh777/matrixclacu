@@ -1,212 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Matrix Calculator</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet"/>
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-  <script id="MathJax-script" async
-          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <style>
     body {
-      font-family: 'Poppins', sans-serif;
-      padding: 2rem;
-      background-color: #f5f7fa;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f2f4f8;
+      padding: 40px;
       color: #333;
     }
-
     h1 {
-      font-size: 2rem;
-      margin-bottom: 1rem;
+      font-size: 2em;
+      margin-bottom: 20px;
     }
-
-    select, button {
-      padding: 8px 12px;
-      font-size: 1rem;
+    .matrix-input {
+      margin-bottom: 20px;
+    }
+    input[type="number"] {
+      width: 50px;
+      height: 40px;
+      font-size: 16px;
+      text-align: center;
       margin: 5px;
     }
-
-    .matrix-input {
-      margin-top: 20px;
-      display: grid;
-      gap: 8px;
-    }
-
-    .matrix-input input {
-      width: 60px;
-      padding: 6px;
-      text-align: center;
-    }
-
-    .result {
-      margin-top: 2rem;
-      padding: 1rem;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .operation-buttons {
-      margin-top: 1rem;
-    }
-
-    .operation-buttons button {
-      background-color: #007bff;
+    .buttons button {
+      background-color: #0069ed;
       color: white;
       border: none;
-      margin-right: 10px;
-      border-radius: 6px;
-      transition: background-color 0.3s;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
     }
-
-    .operation-buttons button:hover {
-      background-color: #0056b3;
-    }
-
-    .math-output {
-      font-size: 1.2rem;
-      margin-top: 1rem;
-      white-space: pre-wrap;
+    .result {
+      background: white;
+      padding: 20px;
+      margin-top: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      font-size: 18px;
     }
   </style>
 </head>
 <body>
-
   <h1>Matrix Calculator</h1>
 
-  <label>Select matrix order:
-    <select id="matrix-size">
-      <option>2x2</option>
-      <option selected>3x3</option>
-    </select>
-  </label>
-  <button onclick="generateMatrix()">Next</button>
+  <label for="matrixOrder">Select matrix order:</label>
+  <select id="matrixOrder">
+    <option value="2">2x2</option>
+    <option value="3">3x3</option>
+  </select>
+  <button onclick="createMatrixInputs()">Next</button>
 
-  <div id="matrix-container" class="matrix-input"></div>
+  <div id="matrixInputs" class="matrix-input"></div>
 
-  <div class="operation-buttons">
-    <button onclick="calculatePower()">Power</button>
+  <div class="buttons">
     <button onclick="calculateAdjugate()">Adjugate</button>
+    <button onclick="calculateDeterminant()">Determinant</button>
+    <button onclick="raiseToPower()">Power</button>
+    <input type="number" id="power" placeholder="n" style="width: 40px">
   </div>
 
-  <div class="result">
-    <strong>Result:</strong>
-    <div id="result-text" class="math-output"></div>
-  </div>
+  <div id="result" class="result"></div>
 
   <script>
-    let matrixSize = 3;
+    let matrixSize = 2;
 
-    function generateMatrix() {
-      const sizeText = document.getElementById("matrix-size").value;
-      matrixSize = parseInt(sizeText[0]);
-      const container = document.getElementById("matrix-container");
+    function createMatrixInputs() {
+      matrixSize = parseInt(document.getElementById("matrixOrder").value);
+      const container = document.getElementById("matrixInputs");
       container.innerHTML = '';
-      container.style.gridTemplateColumns = `repeat(${matrixSize}, auto)`;
-
-      for (let i = 0; i < matrixSize * matrixSize; i++) {
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.value = 0;
-        container.appendChild(input);
+      for (let i = 0; i < matrixSize; i++) {
+        for (let j = 0; j < matrixSize; j++) {
+          const input = document.createElement("input");
+          input.type = "number";
+          input.id = `cell-${i}-${j}`;
+          container.appendChild(input);
+        }
+        container.appendChild(document.createElement("br"));
       }
+      document.getElementById("result").innerHTML = '';
     }
 
     function getMatrix() {
-      const inputs = document.querySelectorAll("#matrix-container input");
       const matrix = [];
       for (let i = 0; i < matrixSize; i++) {
         const row = [];
         for (let j = 0; j < matrixSize; j++) {
-          row.push(parseFloat(inputs[i * matrixSize + j].value));
+          const value = parseFloat(document.getElementById(`cell-${i}-${j}`).value) || 0;
+          row.push(value);
         }
         matrix.push(row);
       }
       return matrix;
     }
 
-    function displayMath(latexString) {
-      const result = document.getElementById("result-text");
-      result.innerHTML = `\\(${latexString}\\)`;
-      MathJax.typesetPromise();
-    }
-
-    function matrixToLatex(matrix) {
-      return `\\begin{bmatrix}` + matrix.map(row => row.join(" & ")).join(" \\\\ ") + `\\end{bmatrix}`;
-    }
-
-    function transpose(matrix) {
-      return matrix[0].map((_, colIndex) => matrix.map(row => row[colIndex]));
+    function determinant(matrix) {
+      if (matrix.length === 2) {
+        return matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0];
+      } else {
+        return (
+          matrix[0][0]*(matrix[1][1]*matrix[2][2] - matrix[1][2]*matrix[2][1]) -
+          matrix[0][1]*(matrix[1][0]*matrix[2][2] - matrix[1][2]*matrix[2][0]) +
+          matrix[0][2]*(matrix[1][0]*matrix[2][1] - matrix[1][1]*matrix[2][0])
+        );
+      }
     }
 
     function cofactor(matrix, row, col) {
-      const minor = matrix
-        .filter((_, i) => i !== row)
-        .map(r => r.filter((_, j) => j !== col));
-      return (((row + col) % 2 === 0 ? 1 : -1) * determinant(minor));
-    }
-
-    function determinant(matrix) {
-      const n = matrix.length;
-      if (n === 2)
-        return matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0];
-
-      let det = 0;
-      for (let j = 0; j < n; j++) {
-        det += matrix[0][j] * cofactor(matrix, 0, j);
-      }
-      return det;
+      const minor = matrix.filter((_, r) => r !== row).map(r => r.filter((_, c) => c !== col));
+      const det = determinant(minor);
+      return ((row + col) % 2 === 0 ? 1 : -1) * det;
     }
 
     function adjugate(matrix) {
-      const n = matrix.length;
-      const cofactorMatrix = Array.from({ length: n }, (_, i) =>
-        Array.from({ length: n }, (_, j) => cofactor(matrix, i, j))
-      );
-      return transpose(cofactorMatrix);
+      const size = matrix.length;
+      const cofactors = [];
+      for (let i = 0; i < size; i++) {
+        cofactors[i] = [];
+        for (let j = 0; j < size; j++) {
+          cofactors[i][j] = cofactor(matrix, i, j);
+        }
+      }
+      return cofactors[0].map((_, colIndex) => cofactors.map(row => row[colIndex])); // transpose
     }
 
-    function multiplyMatrices(A, B) {
-      const result = [];
-      for (let i = 0; i < A.length; i++) {
-        const row = [];
-        for (let j = 0; j < B.length; j++) {
-          let sum = 0;
-          for (let k = 0; k < A.length; k++) {
-            sum += A[i][k] * B[k][j];
-          }
-          row.push(sum);
-        }
-        result.push(row);
-      }
-      return result;
+    function matrixToLatex(matrix) {
+      return `\\begin{bmatrix}${matrix.map(row => row.join(' & ')).join(' \\\\ ')}\\end{bmatrix}`;
+    }
+
+    function calculateDeterminant() {
+      const m = getMatrix();
+      const det = determinant(m);
+      document.getElementById("result").innerHTML = `$$
+        \text{Matrix: } ${matrixToLatex(m)} \\
+        \text{Determinant: } \det(A) = ${det}
+      $$`;
+      MathJax.typeset();
     }
 
     function calculateAdjugate() {
-      const matrix = getMatrix();
-      const cofStr = matrix.map((_, i) =>
-        matrix.map((_, j) => `C_{${i+1}${j+1}} = ${cofactor(matrix, i, j)}`).join(', ')
-      ).join(',\\ ');
-
-      const adj = adjugate(matrix);
-      const resultLatex = `\\text{Cofactors: } ${cofStr} \\\\ \\text{Adjugate: } ${matrixToLatex(adj)}`;
-      displayMath(resultLatex);
+      const m = getMatrix();
+      const adj = adjugate(m);
+      document.getElementById("result").innerHTML = `$$
+        \text{Original Matrix: } ${matrixToLatex(m)} \\
+        \text{Adjugate: } ${matrixToLatex(adj)}
+      $$`;
+      MathJax.typeset();
     }
 
-    function calculatePower() {
-      const matrix = getMatrix();
-      const power = 2; // Can allow user input if needed
-      let result = matrix;
-      for (let i = 1; i < power; i++) {
-        result = multiplyMatrices(result, matrix);
+    function multiplyMatrices(a, b) {
+      return a.map((row, i) => b[0].map((_, j) => row.reduce((sum, _, k) => sum + a[i][k] * b[k][j], 0)));
+    }
+
+    function raiseToPower() {
+      const m = getMatrix();
+      const n = parseInt(document.getElementById("power").value);
+      if (isNaN(n) || n < 1) return alert("Enter valid power n ≥ 1");
+      let result = m;
+      for (let i = 1; i < n; i++) {
+        result = multiplyMatrices(result, m);
       }
-      const resultLatex = `\\left(${matrixToLatex(matrix)}\\right)^${power} = ${matrixToLatex(result)}`;
-      displayMath(resultLatex);
+      document.getElementById("result").innerHTML = `$$
+        A = ${matrixToLatex(m)} \\
+        A^{${n}} = ${matrixToLatex(result)}
+      $$`;
+      MathJax.typeset();
     }
 
-    window.onload = generateMatrix;
+    window.onload = createMatrixInputs;
   </script>
-
 </body>
 </html>
