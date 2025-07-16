@@ -118,17 +118,43 @@
       return ((row + col) % 2 === 0 ? 1 : -1) * det;
     }
 
-    function adjugate(matrix) {
-      const size = matrix.length;
-      const cofactors = [];
-      for (let i = 0; i < size; i++) {
-        cofactors[i] = [];
-        for (let j = 0; j < size; j++) {
-          cofactors[i][j] = cofactor(matrix, i, j);
-        }
-      }
-      return cofactors[0].map((_, colIndex) => cofactors.map(row => row[colIndex])); // transpose
+    function calculateAdjugate(matrix, n) {
+    // Handle 2x2 matrix directly
+    if (n === 2) {
+        const a = matrix[0][0];
+        const b = matrix[0][1];
+        const c = matrix[1][0];
+        const d = matrix[1][1];
+
+        const adj = [
+            [d, -b],
+            [-c, a]
+        ];
+
+        displayLatexMatrix("Adjugate: ", adj);
+        return;
     }
+
+    // General case (n > 2)
+    const cofactors = [];
+    for (let i = 0; i < n; i++) {
+        cofactors[i] = [];
+        for (let j = 0; j < n; j++) {
+            const subMatrix = getCofactor(matrix, i, j, n);
+            const sign = ((i + j) % 2 === 0) ? 1 : -1;
+            const det = calculateDeterminant(subMatrix, n - 1);
+            cofactors[i][j] = sign * det;
+        }
+    }
+
+    // Transpose the cofactor matrix to get adjugate
+    const adjugate = cofactors[0].map((_, colIndex) =>
+        cofactors.map(row => row[colIndex])
+    );
+
+    displayLatexMatrix("Adjugate: ", adjugate);
+}
+
 
     function matrixToLatex(matrix) {
       return `\\begin{bmatrix}${matrix.map(row => row.join(' & ')).join(' \\\\ ')}\\end{bmatrix}`;
