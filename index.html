@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Matrix Calculator</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .matrix-input { margin-top: 20px; }
+    input[type="number"] { width: 50px; margin: 5px; }
+    .result { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Matrix Calculator</h1>
+
+  <label>Select matrix order:
+    <select id="matrixOrder">
+      <option value="2">2x2</option>
+      <option value="3">3x3</option>
+    </select>
+  </label>
+  <button onclick="createMatrixInput()">Next</button>
+
+  <div class="matrix-input" id="matrixInputArea"></div>
+  <div id="operationArea"></div>
+  <div class="result" id="resultArea"></div>
+
+  <script>
+    let order = 2;
+    let matrixInputs = [];
+
+    function createMatrixInput() {
+      order = parseInt(document.getElementById('matrixOrder').value);
+      const container = document.getElementById('matrixInputArea');
+      container.innerHTML = '';
+      matrixInputs = [];
+
+      for (let i = 0; i < order; i++) {
+        const row = [];
+        for (let j = 0; j < order; j++) {
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.id = `cell-${i}-${j}`;
+          container.appendChild(input);
+          row.push(input);
+        }
+        matrixInputs.push(row);
+        container.appendChild(document.createElement('br'));
+      }
+
+      // Add operation buttons
+      const opArea = document.getElementById('operationArea');
+      opArea.innerHTML = `
+        <br>
+        <label>Choose operation: </label>
+        <button onclick="computePower()">Power</button>
+        <button onclick="computeAdj()">Adjugate</button>
+      `;
+    }
+
+    function getMatrix() {
+      const matrix = [];
+      for (let i = 0; i < order; i++) {
+        const row = [];
+        for (let j = 0; j < order; j++) {
+          row.push(parseFloat(document.getElementById(`cell-${i}-${j}`).value));
+        }
+        matrix.push(row);
+      }
+      return matrix;
+    }
+
+    function computePower() {
+      const power = parseInt(prompt("Enter power (e.g. 2 for square):"));
+      if (isNaN(power) || power < 1) return alert("Invalid power");
+      const matrix = getMatrix();
+      let result = matrix;
+
+      for (let p = 1; p < power; p++) {
+        result = multiplyMatrices(result, matrix);
+      }
+
+      displayResult(result);
+    }
+
+    function computeAdj() {
+      const matrix = getMatrix();
+      const adj = adjugate(matrix);
+      displayResult(adj);
+    }
+
+    function multiplyMatrices(A, B) {
+      const n = A.length;
+      const result = Array.from({ length: n }, () => Array(n).fill(0));
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+          for (let k = 0; k < n; k++) {
+            result[i][j] += A[i][k] * B[k][j];
+          }
+        }
+      }
+      return result;
+    }
+
+    function adjugate(matrix) {
+      if (matrix.length === 2) {
+        const [[a, b], [c, d]] = matrix;
+        return [[d, -b], [-c, a]];
+      }
+
+      if (matrix.length === 3) {
+        const cofactor = (m, row, col) => {
+          const sub = m.filter((_, i) => i !== row)
+                      .map(r => r.filter((_, j) => j !== col));
+          return ((row + col) % 2 === 0 ? 1 : -1) * (sub[0][0] * sub[1][1] - sub[0][1] * sub[1][0]);
+        };
+
+        const adj = Array.from({ length: 3 }, (_, i) =>
+          Array.from({ length: 3 }, (_, j) => cofactor(matrix, j, i))
+        );
+
+        return adj;
+      }
+
+      return null;
+    }
+
+    function displayResult(matrix) {
+      const area = document.getElementById('resultArea');
+      area.innerHTML = '<h3>Result:</h3>';
+      matrix.forEach(row => {
+        area.innerHTML += row.map(x => x.toFixed(2)).join(' ') + '<br>';
+      });
+    }
+  </script>
+</body>
+</html>
