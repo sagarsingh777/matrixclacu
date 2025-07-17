@@ -99,6 +99,7 @@
   <div class="controls">
     <button onclick="calculateDeterminant()">Determinant</button>
     <button onclick="calculateAdjugate()">Adjugate</button>
+    <button onclick="calculateManualInverse()">Inverse (Manual)</button>
     <button onclick="calculatePower()">Power</button>
     <div class="power-input">
       <input type="number" id="powerValue" value="1" min="1" />
@@ -206,6 +207,51 @@
     }
 
     generateMatrixInputs();
+    function calculateManualInverse() {
+  const m = getMatrix();
+
+  // Calculate determinant
+  let det = 0;
+  if (matrixSize === 2) {
+    det = m[0][0]*m[1][1] - m[0][1]*m[1][0];
+  } else if (matrixSize === 3) {
+    det = m[0][0]*(m[1][1]*m[2][2] - m[1][2]*m[2][1]) -
+          m[0][1]*(m[1][0]*m[2][2] - m[1][2]*m[2][0]) +
+          m[0][2]*(m[1][0]*m[2][1] - m[1][1]*m[2][0]);
+  }
+
+  if (det === 0) {
+    document.getElementById("result").innerText = "Inverse not defined (determinant is 0)";
+    return;
+  }
+
+  // Calculate adjugate
+  let adj = [];
+  if (matrixSize === 2) {
+    adj = [
+      [ m[1][1], -m[0][1] ],
+      [ -m[1][0], m[0][0] ]
+    ];
+  } else if (matrixSize === 3) {
+    for (let i = 0; i < 3; i++) {
+      adj[i] = [];
+      for (let j = 0; j < 3; j++) {
+        const sub = m
+          .filter((_, r) => r !== i)
+          .map(row => row.filter((_, c) => c !== j));
+        const cofactor = sub[0][0]*sub[1][1] - sub[0][1]*sub[1][0];
+        adj[i][j] = ((i + j) % 2 === 0 ? 1 : -1) * cofactor;
+      }
+    }
+    // Transpose adjugate
+    adj = adj[0].map((_, i) => adj.map(row => row[i]));
+  }
+
+  // Divide adjugate by determinant
+  const inverse = adj.map(row => row.map(value => value / det));
+
+  showMatrix(inverse, `Inverse (1/det * adjugate)`);
+}
   </script>
 </body>
 </html>
