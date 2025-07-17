@@ -98,8 +98,12 @@
 
   <div class="controls">
     <button onclick="calculateDeterminant()">Determinant</button>
-    <button onclick="calculateAdjugate()">Adjugate</button>
-    <button onclick="calculateManualInverse()">Inverse (Manual)</button>
+<!--     <button onclick="calculateAdjugate()">Adjugate</button> -->
+<!--     <button onclick="calculateManualInverse()">Inverse (Manual)</bu -->
+    <div style="display: flex; flex-direction: column; align-items: center;">
+  <button onclick="calculateAdjugate()">Adjugate</button>
+  <button onclick="calculateManualInverse()" style="margin-top: 10px;">Inverse (Manual)</button>
+</div>
     <button onclick="calculatePower()">Power</button>
     <div class="power-input">
       <input type="number" id="powerValue" value="1" min="1" />
@@ -224,6 +228,23 @@
     document.getElementById("result").innerText = "Inverse not defined (determinant is 0)";
     return;
   }
+      function calculateManualInverse() {
+  const m = getMatrix();
+
+  // Calculate determinant
+  let det = 0;
+  if (matrixSize === 2) {
+    det = m[0][0]*m[1][1] - m[0][1]*m[1][0];
+  } else if (matrixSize === 3) {
+    det = m[0][0]*(m[1][1]*m[2][2] - m[1][2]*m[2][1]) -
+          m[0][1]*(m[1][0]*m[2][2] - m[1][2]*m[2][0]) +
+          m[0][2]*(m[1][0]*m[2][1] - m[1][1]*m[2][0]);
+  }
+
+  if (det === 0) {
+    document.getElementById("result").innerText = "Inverse not defined (determinant is 0)";
+    return;
+  }
 
   // Calculate adjugate
   let adj = [];
@@ -247,10 +268,10 @@
     adj = adj[0].map((_, i) => adj.map(row => row[i]));
   }
 
-  // Divide adjugate by determinant
-  const inverse = adj.map(row => row.map(value => value / det));
+  // Compute inverse: adj / det
+  const inverse = adj.map(row => row.map(val => parseFloat((val / det).toFixed(3))));
 
-  showMatrix(inverse, `Inverse (1/det * adjugate)`);
+  showMatrix(inverse, "Inverse (1/det × adjugate)");
 }
   </script>
 </body>
